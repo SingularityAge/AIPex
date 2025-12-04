@@ -55,7 +55,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { ChatStatus } from "ai";
-import { ClockIcon, CopyIcon, RefreshCcwIcon, SettingsIcon, PlusIcon, LayersIcon, FileTextIcon, SearchIcon, DollarSignIcon, GlobeIcon, BookmarkIcon, ClipboardIcon, CameraIcon, FileIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { ClockIcon, CopyIcon, RefreshCcwIcon, SettingsIcon, PlusIcon, GlobeIcon, BookmarkIcon, ClipboardIcon, CameraIcon, FileIcon } from "lucide-react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { models, SYSTEM_PROMPT } from "./constants";
 import { MessageHandler, type MessageHandlerConfig } from "./message-handler";
@@ -63,11 +63,9 @@ import type { UIMessage } from "./types";
 import { Action, Actions } from "@/components/ai-elements/actions";
 import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
 import { Source, Sources, SourcesContent, SourcesTrigger } from "@/components/ai-elements/sources";
-import { Suggestions, Suggestion } from "@/components/ai-elements/suggestion";
 import { useStorage } from "~/lib/storage";
 import { getAllTools } from "~/lib/services/tool-registry";
-import { useTranslation, useLanguageChanger } from "~/lib/i18n/hooks";
-import type { Language } from "~/lib/i18n/types";
+import { useTranslation } from "~/lib/i18n/hooks";
 import { useTheme, type Theme } from "~/lib/hooks/use-theme";
 import { useTabsSync } from "~/lib/hooks/use-tabs-sync";
 import { hostAccessManager, type HostAccessMode, type HostAccessConfig } from "~/lib/services/host-access-manager";
@@ -99,85 +97,26 @@ const getContextIcon = (contextType: string) => {
   }
 };
 
-// Welcome screen component
-const WelcomeScreen = ({ onSuggestionClick }: { onSuggestionClick: (text: string) => void }) => {
+// Simple empty state component (no suggestions)
+const EmptyState = () => {
   const { t } = useTranslation();
-  
-  const suggestions = [
-    {
-      icon: LayersIcon,
-      text: t("welcome.organizeTabs"),
-      iconColor: "text-blue-600",
-      bgColor: "bg-blue-100",
-    },
-    {
-      icon: FileTextIcon,
-      text: t("welcome.analyzePage"),
-      iconColor: "text-green-600",
-      bgColor: "bg-green-100",
-    },
-    {
-      icon: SearchIcon,
-      text: t("welcome.research"),
-      iconColor: "text-purple-600",
-      bgColor: "bg-purple-100",
-    },
-    {
-      icon: DollarSignIcon,
-      text: t("welcome.comparePrice"),
-      iconColor: "text-orange-600",
-      bgColor: "bg-orange-100",
-    },
-  ];
 
   return (
     <div className="flex flex-col items-center justify-center h-full p-4 sm:p-8">
-      <div className="text-center mb-6 sm:mb-8">
+      <div className="text-center">
         <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          {t("welcome.title")}
+          AIPex Browser Assistant
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          {t("welcome.subtitle")}
+          Ask me anything or start a conversation
         </p>
-      </div>
-
-      <div className="w-full max-w-2xl">
-        <Suggestions className="grid gap-3 sm:gap-4 sm:grid-cols-2 w-full">
-          {suggestions.map((suggestion, index) => {
-            const Icon = suggestion.icon;
-            return (
-              <Suggestion
-                key={index}
-                suggestion={suggestion.text}
-                onClick={onSuggestionClick}
-                variant="outline"
-                size="lg"
-                className={cn(
-                  "w-full h-auto justify-start items-center p-4 sm:p-5 rounded-xl border transition-all duration-200",
-                  "hover:shadow-md bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm",
-                  "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
-                )}
-              >
-                <div className="flex items-center gap-3 w-full">
-                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0", suggestion.bgColor)}>
-                    <Icon className={cn("w-5 h-5", suggestion.iconColor)} />
-                  </div>
-                  <div className="text-xs text-left text-gray-700 dark:text-gray-300 flex-1 line-clamp-2 break-words whitespace-normal">
-                    {suggestion.text}
-                  </div>
-                </div>
-              </Suggestion>
-            );
-          })}
-        </Suggestions>
       </div>
     </div>
   );
 };
 
 const ChatBot = () => {
-  const { t, language } = useTranslation()
-  const changeLanguage = useLanguageChanger()
+  const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<UIMessage[]>([]);
@@ -185,9 +124,9 @@ const ChatBot = () => {
   const [messageQueue, setMessageQueue] = useState<UIMessage[]>([]);
   const messageHandlerRef = useRef<MessageHandler | null>(null);
 
-  const [aiHost, setAiHost, isLoadingHost] = useStorage("aiHost", import.meta.env.VITE_AI_HOST || "https://api.openai.com/v1/chat/completions");
-  const [aiToken, setAiToken, isLoadingToken] = useStorage("aiToken", import.meta.env.VITE_AI_TOKEN);
-  const [aiModel, setAiModel, isLoadingModel] = useStorage("aiModel", import.meta.env.VITE_AI_MODEL || "deepseek-chat");
+  const [aiHost, setAiHost, isLoadingHost] = useStorage("aiHost", "https://openrouter.ai/api/v1/chat/completions");
+  const [aiToken, setAiToken, isLoadingToken] = useStorage("aiToken", "");
+  const [aiModel, setAiModel, isLoadingModel] = useStorage("aiModel", "anthropic/claude-3.5-sonnet");
 
   // Settings dialog state
   const [showSettings, setShowSettings] = useState(false);
@@ -228,7 +167,7 @@ const ChatBot = () => {
     }
     
     const config: MessageHandlerConfig = {
-      initialModel: aiModel || "deepseek-chat",
+      initialModel: aiModel || "anthropic/claude-3.5-sonnet",
       initialTools: getAllTools().map((tool) => ({
         type: "function",
         function: {
@@ -237,7 +176,7 @@ const ChatBot = () => {
           parameters: tool.inputSchema,
         },
       })),
-      initialAiHost: aiHost || "https://api.openai.com/v1/chat/completions",
+      initialAiHost: aiHost || "https://openrouter.ai/api/v1/chat/completions",
       initialAiToken: aiToken || "",
       initialMessages: [{ role: "system", id: "system", parts: [{ type: "text", text: SYSTEM_PROMPT }] }],
     };
@@ -291,14 +230,14 @@ const ChatBot = () => {
     }
     
     messageHandlerRef.current.updateConfig({
-      initialModel: aiModel || "deepseek-chat",
-      initialAiHost: aiHost || "https://api.openai.com/v1/chat/completions",
+      initialModel: aiModel || "anthropic/claude-3.5-sonnet",
+      initialAiHost: aiHost || "https://openrouter.ai/api/v1/chat/completions",
       initialAiToken: aiToken || "",
     });
   }, [aiModel, aiHost, aiToken, isLoadingHost, isLoadingToken, isLoadingModel]);
 
   const handleSubmit = (message: PromptInputMessage | string) => {
-    // Handle string input (from welcome suggestions)
+    // Handle string input
     if (typeof message === "string") {
       if (!message.trim()) return;
       messageHandlerRef.current?.sendMessage(message);
@@ -452,7 +391,7 @@ const ChatBot = () => {
         <Conversation className="h-full">
           <ConversationContent>
             {messages.filter((message) => message.role !== "system").length === 0 ? (
-              <WelcomeScreen onSuggestionClick={handleSubmit} />
+              <EmptyState />
             ) : (
               messages.filter((message) => message.role !== "system").map((message, messageIndex) => (
               <div key={message.id}>
@@ -711,20 +650,6 @@ const ChatBot = () => {
             {/* General Tab Content */}
             {activeTab === "general" && (
               <div className="space-y-4 py-4">
-                {/* Language Selection */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{t("settings.language")}</label>
-                  <Select value={language} onValueChange={(value) => changeLanguage(value as Language)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="en">{t("language.en")}</SelectItem>
-                      <SelectItem value="zh">{t("language.zh")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 {/* Theme Selection */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">{t("settings.theme")}</label>
@@ -740,35 +665,44 @@ const ChatBot = () => {
                   </Select>
                 </div>
 
-                {/* AI Host */}
+                {/* OpenRouter API Key */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">{t("settings.aiHost")}</label>
-                  <Input
-                    value={tempAiHost}
-                    onChange={(e) => setTempAiHost(e.target.value)}
-                    placeholder={t("settings.hostPlaceholder")}
-                  />
-                </div>
-
-                {/* AI Token */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{t("settings.aiToken")}</label>
+                  <label className="text-sm font-medium">OpenRouter API Key</label>
                   <Input
                     type="password"
                     value={tempAiToken}
                     onChange={(e) => setTempAiToken(e.target.value)}
-                    placeholder={t("settings.tokenPlaceholder")}
+                    placeholder="sk-or-v1-..."
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Get your API key from <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="underline">openrouter.ai/keys</a>
+                  </p>
                 </div>
 
-                {/* AI Model */}
+                {/* Default Model */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">{t("settings.aiModel")}</label>
+                  <label className="text-sm font-medium">Default Model</label>
                   <Input
                     value={tempAiModel}
                     onChange={(e) => setTempAiModel(e.target.value)}
-                    placeholder={t("settings.modelPlaceholder")}
+                    placeholder="anthropic/claude-3.5-sonnet"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Browse models at <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="underline">openrouter.ai/models</a>
+                  </p>
+                </div>
+
+                {/* API Endpoint (Advanced) */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">API Endpoint (Advanced)</label>
+                  <Input
+                    value={tempAiHost}
+                    onChange={(e) => setTempAiHost(e.target.value)}
+                    placeholder="https://openrouter.ai/api/v1/chat/completions"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Only change this if you know what you're doing
+                  </p>
                 </div>
               </div>
             )}

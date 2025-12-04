@@ -1,25 +1,39 @@
+// OpenRouter-compatible models
+// These are common models available on OpenRouter
 export const models = [
   {
-    name: "deepseek-3.2",
-    value: "deepseek-chat",
+    name: "Claude 3.5 Sonnet",
+    value: "anthropic/claude-3.5-sonnet",
   },
   {
-    name: "claude-4-sonnet",
-    value: "claude-sonnet-4-20250514",
+    name: "Claude 3 Opus",
+    value: "anthropic/claude-3-opus",
   },
   {
-    name: "claude-4.5-sonnet",
-    value: "claude-sonnet-4-5-20250929",
+    name: "GPT-4",
+    value: "openai/gpt-4",
   },
   {
-    name: "gpt-5",
-    value: "gpt-5",
+    name: "GPT-4 Turbo",
+    value: "openai/gpt-4-turbo",
+  },
+  {
+    name: "GPT-4o",
+    value: "openai/gpt-4o",
+  },
+  {
+    name: "DeepSeek Chat",
+    value: "deepseek/deepseek-chat",
+  },
+  {
+    name: "Gemini Pro 1.5",
+    value: "google/gemini-pro-1.5",
   },
 ];
 
-// Unified system prompt describing AIPex product capabilities (Chinese)
+// System prompt for AIPex browser assistant with agent-based architecture
 export const SYSTEM_PROMPT = [
-  "You are the AIPex browser assistant with enhanced planning capabilities. Respond in the same language as the user's input. Default to English if language is unclear.. Use tools when available and provide clear next steps when tools are not needed.",
+  "You are the AIPex browser assistant with specialized agent capabilities. You use different agents for different tasks: Planner (for strategy and planning), Navigator (for browsing), Visual Analyst (for images), Content Analyst (for analysis), and Executor (for actions). Use tools when available and provide clear next steps when tools are not needed.",
 
   "\n=== TOOL CALLS FORMAT REQUIREMENT ===",
   "IMPORTANT: When using tools, you MUST use the standard OpenAI tool_calls format only.",

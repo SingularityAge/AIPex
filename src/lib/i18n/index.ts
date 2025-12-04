@@ -3,16 +3,14 @@ import type { Language, TranslationResources, TranslationKey } from "./types"
 
 // Language resource imports
 import enTranslations from "./locales/en.json"
-import zhTranslations from "./locales/zh.json"
 
-export const SUPPORTED_LANGUAGES: Language[] = ['en', 'zh']
+export const SUPPORTED_LANGUAGES: Language[] = ['en']
 export const DEFAULT_LANGUAGE: Language = 'en'
 export const LANGUAGE_STORAGE_KEY = 'aipex_language'
 
 // Translation resources map
 const translations: Record<Language, TranslationResources> = {
-  en: enTranslations as TranslationResources,
-  zh: zhTranslations as TranslationResources
+  en: enTranslations as TranslationResources
 }
 
 // Storage instance
@@ -36,12 +34,6 @@ export const getStoredLanguage = async (): Promise<Language> => {
     
     if (storedLang && SUPPORTED_LANGUAGES.includes(storedLang as Language)) {
       return storedLang as Language
-    }
-    
-    // Fallback to browser language detection
-    const browserLang = navigator.language.toLowerCase()
-    if (browserLang.startsWith('zh')) {
-      return 'zh'
     }
     
     return DEFAULT_LANGUAGE
